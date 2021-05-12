@@ -4328,6 +4328,56 @@ class spell_item_eggnog : public SpellScript
     }
 };
 
+enum GoblinBomb
+{
+    SPELL_SUMMON_GOBLIN_BOMB = 13258,
+};
+
+// 23134 - Goblin Bomb
+class spell_item_goblin_bomb : public SpellScript
+{
+    PrepareSpellScript(spell_item_goblin_bomb);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ SPELL_SUMMON_GOBLIN_BOMB });
+    }
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        GetCaster()->CastSpell(GetCaster(), SPELL_SUMMON_GOBLIN_BOMB, false);
+    }
+
+    void Register() override
+    {
+        OnEffectHit += SpellEffectFn(spell_item_goblin_bomb::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+// 13258 - Summon Goblin Bomb
+class spell_item_summon_goblin_bomb : public SpellScript
+{
+    PrepareSpellScript(spell_item_summon_goblin_bomb);
+
+    void HandleSummon(SpellEffIndex effIndex)
+    {
+        PreventHitDefaultEffect(effIndex);
+        Unit* caster = GetCaster();
+
+        uint32 entry = uint32(GetSpellInfo()->Effects[effIndex].MiscValue);
+        SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(uint32(GetSpellInfo()->Effects[effIndex].MiscValueB));
+        uint32 duration = uint32(GetSpellInfo()->GetDuration());
+        Position pos = caster->GetPosition();
+
+        caster->GetMap()->SummonCreature(entry, pos, properties, duration, caster, GetSpellInfo()->Id);
+    }
+
+    void Register() override
+    {
+        OnEffectHit += SpellEffectFn(spell_item_summon_goblin_bomb::HandleSummon, EFFECT_0, SPELL_EFFECT_SUMMON);
+    }
+};
+
 void AddSC_item_spell_scripts()
 {
     // 23074 Arcanite Dragonling
@@ -4460,4 +4510,6 @@ void AddSC_item_spell_scripts()
     RegisterSpellScript(spell_item_mad_alchemists_potion);
     RegisterSpellScript(spell_item_crazy_alchemists_potion);
     RegisterSpellScript(spell_item_eggnog);
+    RegisterSpellScript(spell_item_goblin_bomb);
+    RegisterSpellScript(spell_item_summon_goblin_bomb);
 }
